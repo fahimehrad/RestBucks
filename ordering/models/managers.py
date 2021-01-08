@@ -9,7 +9,7 @@ class SafeDelete(models.Manager):
 
 
 class OrderManager(models.Manager):
-    # We use this manager to handle queries easier and do not have complex queries in service layer
+    # We use this manager to handle queries easier and not to have complex queries in service layer
     def get_queryset(self):
         return super().get_queryset().filter(deleted_at=None)
 

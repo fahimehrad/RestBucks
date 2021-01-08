@@ -34,7 +34,7 @@ async def send_email(subject, mail_content):
     message = MIMEMultipart()
     message['From'] = sender_address
     message['To'] = receiver_address
-    message['Subject'] = 'A test mail sent by Python. It has an attachment.'   # The subject line
+    message['Subject'] = subject   # The subject line
 
     # The body and the attachments for the mail
     message.attach(MIMEText(mail_content, 'plain'))
