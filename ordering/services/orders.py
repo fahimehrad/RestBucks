@@ -8,10 +8,10 @@ from ..models.orders import Order
 from ..enums.order import OrderStatus
 
 
-def create_order(user_id, product_id, quantity, option_values_ids):
-    order = get_user_order(user_id)
-    validate_order_status(order)
-    validate_all_options_mentioned(product_id, option_values_ids)
+def create_or_update_order(user_id, product_id, quantity, option_values_ids):
+    order = _get_or_create_user_order(user_id)
+    _validate_order_status(order)
+    _validate_all_options_mentioned(product_id, option_values_ids)
     order_product, _ = OrderProduct.objects.get_or_create(order=order, product_id=product_id)
     order_product.quantity = quantity
     order_product.save()
@@ -37,11 +37,11 @@ def get_order(user_id):
     order = Order.objects.get_order_of_user(user_id)
     order_products = OrderProduct.objects.filter(order=order)
     products = Product.objects.filter(id__in=order_products.values_list('product_id', flat=True))
-    total_price = calculate_total_price(order_products)
+    total_price = _calculate_total_price(order_products)
     return [order, products, total_price]
 
 
-def calculate_total_price(order_products):
+def _calculate_total_price(order_products):
     products = map(lambda x: [x.product, x.quantity], order_products)
     total_price = 0
     for item in products:
@@ -50,7 +50,7 @@ def calculate_total_price(order_products):
     return total_price
 
 
-def get_user_order(user_id):
+def _get_or_create_user_order(user_id):
     orders = Order.objects.filter(user_id=user_id).exclude(status=OrderStatus.DELIVERED)
     if len(orders) == 0:
         order = Order.objects.create(user_id=user_id, status=OrderStatus.WAITING)
@@ -59,13 +59,13 @@ def get_user_order(user_id):
     return order
 
 
-def validate_all_options_mentioned(product_id, option_values_ids):
+def _validate_all_options_mentioned(product_id, option_values_ids):
     product_options_ids = ProductOption.objects.filter(product_id=product_id).values_list('option_id', flat=True)
     input_option_ids = OptionValue.objects.filter(pk__in=option_values_ids).values_list('option_id', flat=True)
     if sorted(product_options_ids) != sorted(input_option_ids):
         raise ValidationError({'message': 'You have to specify all option values of product'})
 
 
-def validate_order_status(order):
+def _validate_order_status(order):
     if order.status != OrderStatus.WAITING:
         raise ValidationError({'message': 'You can only update orders with waiting status'})

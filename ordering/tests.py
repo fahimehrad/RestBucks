@@ -53,28 +53,28 @@ class RestBucksUnitTests(TestCase):
     # We use this decorator to mock pre-save signal
     @factory.django.mute_signals(signals.pre_save)
     def test_create_order(self,):
-        order_service.create_order(self.user.id, self.tea.id, 1, [self.take_away.id])
+        order_service.create_or_update_order(self.user.id, self.tea.id, 1, [self.take_away.id])
         order = Order.objects.all().first()
         self.assertEqual(order.status, OrderStatus.WAITING)
 
     @factory.django.mute_signals(signals.pre_save)
     def test_not_send_all_options_of_product(self):
         try:
-            order_service.create_order(self.user.id, self.cappuccino.id, 1, [self.take_away.id])
+            order_service.create_or_update_order(self.user.id, self.cappuccino.id, 1, [self.take_away.id])
         except ValidationError as error:
             self.assertEqual(error.detail['message'], 'You have to specify all option values of product')
 
     @factory.django.mute_signals(signals.pre_save)
     def test_delete_order(self):
-        order_service.create_order(self.user.id, self.tea.id, 1, [self.take_away.id])
+        order_service.create_or_update_order(self.user.id, self.tea.id, 1, [self.take_away.id])
         order_service.delete_order(self.user.id)
         order = Order.objects.all()
         self.assertEqual(len(order), 0)
 
     @factory.django.mute_signals(signals.pre_save)
     def test_get_order_of_user(self):
-        order_service.create_order(self.user.id, self.tea.id, 2, [self.take_away.id])
-        order_service.create_order(self.user.id, self.cappuccino.id, 1, [self.take_away.id, self.small.id])
+        order_service.create_or_update_order(self.user.id, self.tea.id, 2, [self.take_away.id])
+        order_service.create_or_update_order(self.user.id, self.cappuccino.id, 1, [self.take_away.id, self.small.id])
         [order, products, total_price] = order_service.get_order(self.user.id)
         self.assertEqual(total_price, 2 * self.tea.price + self.cappuccino.price)
         self.assertEqual(len(products), 2)

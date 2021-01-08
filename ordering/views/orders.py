@@ -33,7 +33,7 @@ class OrderView(APIView):
             serializer = SubmitOrderSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             data = serializer.validated_data
-            order_service.create_order(user.id, data['product_id'], data['quantity'], data['option_value_ids'])
+            order_service.create_or_update_order(user.id, data['product_id'], data['quantity'], data['option_value_ids'])
             return Response(data={'result': 'OK'}, status=status.HTTP_200_OK)
 
         except ValidationError as error:
